@@ -1,89 +1,108 @@
 % ----------------- Predicados --------------------------
 % ------------- Parte 1
-% mago(nombre, status, caracter)
-mago(harry, sangreMestiza, [corajudo, amistoso,  orgulloso, inteligente]).
-mago(draco, sangrePura, [inteligente, orgulloso]).
-mago(hermione, sangreImpura, [inteligente, orgullosa, responsable]).
+
+statusSangre(harry, mestiza).
+statusSangre(draco, pura).
+statusSangre(hermione, impura).
+
+magoEs(harry, coraje).
+magoEs(harry, amistad).
+magoEs(harry, orgullo).
+magoEs(harry, inteligencia).
+magoEs(draco, inteligencia).
+magoEs(draco, orgullo).
+magoEs(hermione, inteligencia).
+magoEs(hermione, orgullo).
+magoEs(hermione, responsabilidad).
 
 casaOdiar(harry, slytherin).
 casaOdiar(draco, hufflepuff).
 
-caracPpal(gryffindor, [coraje]).
-caracPpal(slytherin, [orgullo, inteligencia]).
-caracPpal(ravenclaw, [inteligencia, responsabilidad]).
-caracPpal(hufflepuff, [amistoso]).
+caracterCasa(gryffindor, coraje).
+caracterCasa(slytherin, orgullo).
+caracterCasa(slytherin, inteligencia).
+caracterCasa(ravenclaw, inteligencia).
+caracterCasa(ravenclaw, responsabilidad).
+caracterCasa(hufflepuff, amistad).
 
-esMago(Mago):-
-    mago(Mago, _, _).
+mago(Mago):-
+    magoEs(Mago, _).
 
-esCasa(Casa):-
-    caracPpal(Casa, _). 
+mago(Mago):-
+    esDe(Mago, _).
+
+casa(Casa):-
+    caracterCasa(Casa, _). 
 
 % Punto 1
-permiteEntrar(slytherin, Mago):-
-    esMago(Mago),
-    not(mago(Mago, sangreImpura, _)).
-
 permiteEntrar(Casa, Mago):-
-    Casa \= slytherin,
-    esCasa(Casa),
-    esMago(Mago).
+    casa(Casa),
+    mago(Mago),
+    condicionSly(Casa, Mago).
+
+condicionSly(slytherin, Mago):-
+    not(statusSangre(Mago, impura)).
+
+condicionSly(Casa, _):-
+    Casa \= slytherin.
 
 % Punto 2
-cumpleCarac(Casa, Mago):-
-    caracPpal(Casa, CaractsPpales),
-    mago(Mago, _, Caracter),
-    forall(member(Carac, CaractsPpales), member(Carac, Caracter)).
+cumpleCaracter(Casa, Mago):-
+    casa(Casa),
+    mago(Mago),
+    forall(caracterCasa(Casa, C), magoEs(Mago, C)).
+
 
 % Punto 3
-casasPosible(Mago, Casas) :-
-    esMago(Mago),
-    findall(Casa, casaPosible(Mago, Casa), CasasPosibles),
-    incluirCasaEspecial(Mago, CasasPosibles, Casas).
+
+casaPosible(hermione, gryffindor).
 
 casaPosible(Mago, Casa) :-
     permiteEntrar(Casa, Mago),
-    cumpleCarac(Casa, Mago),
+    cumpleCaracter(Casa, Mago),
     not(casaOdiar(Mago, Casa)).
 
-incluirCasaEspecial(hermione, CasasPosibles, [gryffindor | CasasPosibles]).
-incluirCasaEspecial(_, CasasPosibles, CasasPosibles).
-
 % Punto 4
-cadenaDeAmistades([]).
-cadenaDeAmistades([_]).
-cadenaDeAmistades([Mago1, Mago2 | Magos]) :-
-    amistoso(Mago1),
-    amistoso(Mago2),
-    casasPosible(Mago1, Casas1),
-    casasPosible(Mago2, Casas2),
-    intersection(Casas1, Casas2, CasasComun),
-    CasasComun \= [],
-    cadenaDeAmistades([Mago2 | Magos]).
 
-amistoso(Mago) :-
-    mago(Mago, _, Caracteristicas),
-    member(amistoso, Caracteristicas).
-    
+cadenaDeAmistades([M1, M2]):-
+    minimoCadena(M1, M2).
+
+cadenaDeAmistades([ M1, M2 | MS]):-
+    minimoCadena(M1, M2),
+    cadenaDeAmistades([ M2 | MS]).
+
+minimoCadena(M1, M2):-
+    magoEs(M1, amistad),
+    magoEs(M2, amistad),
+    casaPosible(M1, Casa),
+    casaPosible(M2, Casa).
+
 % ------------- Parte 2
-acciones(andarDeNoche, -50).
-acciones(irALugar(Lugar), Puntaje):-
-    prohibido(Lugar, Puntaje).
+accionPosible(ganarPartidaAjedrez, 50).
+accionPosible(salvarAmigos,50).
+accionPosible(vencerVoldemort, 60).
 
-prohibido(bosque, -50).
-prohibido(seccionRestringidaBiblioteca, -10).
-prohibido(tercerPiso, -75).
+accionPosible(andarDeNoche, -50).
 
-acciones(ganarPartidaAjedrez, 50).
-acciones(salvarAmigos,50).
-acciones(vencerVoldemort, 60).
+accionPosible(irALugar(Lugar), Puntaje):-
+    lugarProhibido(Lugar, Puntaje).
+
+accionPosible(irALugar(Lugar), 0):-
+    not(lugarProhibido(Lugar, _)).
+
+lugarProhibido(bosque, -50).
+lugarProhibido(seccionRestringidaBiblioteca, -10).
+lugarProhibido(tercerPiso, -75).
 
 accion(harry, andarDeNoche).
 accion(harry, irALugar(bosque)).
-accion(harry,irALugar(tercerPiso)).
+accion(harry, irALugar(tercerPiso)).
+accion(harry, vencerVoldemort).
 accion(hermione, irALugar(tercerPiso)).
-accion(hermionse, irALugar(seccionRestringidaBiblioteca)).
+accion(hermione, irALugar(seccionRestringidaBiblioteca)).
+accion(hermione, salvarAmigos).
 accion(draco, irALugar(mazmorras)).
+accion(ron, ganarPartidaAjedrez).
 
 esDe(hermione, gryffindor).
 esDe(ron, gryffindor).
@@ -93,9 +112,13 @@ esDe(luna, ravenclaw).
 
 % Punto 1A
 buenAlumno(Mago):-
-    esMago(Mago),
+    mago(Mago),
     accion(Mago, _),
-    forall(accion(Mago, Accion), not((acciones(Accion, Valor), Valor < 0))).
+    not((accion(Mago, Accion), malaAccion(Accion))).
+
+malaAccion(Accion):-
+    accionPosible(Accion, Punto),
+    Punto < 0.
 
 % Punto 1B
 accionRecurrente(Accion):-
@@ -103,34 +126,42 @@ accionRecurrente(Accion):-
     accion(Mago2, Accion),
     Mago1 \= Mago2.
 
+
 % Punto 2
 puntajeTotalCasa(Casa, Puntaje):-
-    esCasa(Casa),
+    casa(Casa),
     findall(PuntajeAlumno, 
-        (esDe(Mago, Casa), puntajeAlumno(Mago, PuntajeAlumno)), 
+        puntajeAlumno(Casa, PuntajeAlumno), 
         PuntajesAlumnos),
     sumlist(PuntajesAlumnos, Puntaje).
 
-puntajeAlumno(Mago, PuntajeMago):-
-    esMago(Mago),
+puntajeAlumno(Casa, PuntajeMago):-
+    esDe(Mago, Casa),
     findall(Puntaje, 
-        (accion(Mago, Accion), acciones(Accion, Puntaje)),
+        (accion(Mago, Accion), accionPosible(Accion, Puntaje)),
         Puntajes),
     sumlist(Puntajes, PuntajeMago).
 
 % Punto 3
-casaGanadora(CasaGanadora):-
-    findall(Puntaje, puntajeTotalCasa(Casa, Puntaje), PuntajesCasas),
-    max_member(MaxPuntaje, PuntajesCasas),
-    puntajeTotalCasa(CasaGanadora, MaxPuntaje).
+casaGanadora(Ganadora):-
+    puntajeTotalCasa(Ganadora, Max),
+    forall(casa(Casa), 
+        (puntajeTotalCasa(Casa, OtroPunto), 
+        OtroPunto =< Max)).
+
 
 % Punto 4
 
-acciones(pregunta(_, Dificultad, _), Dificultad).
+accionPosible(pregunta(_, Dif, snape), Valor):-
+    Valor is Dif/2.
+
+accionPosible(pregunta(_, Dificultad, Prof), Dificultad):-
+    Prof \= snape.
+
 accion(hermione, pregunta("¿Dónde se encuentra un Bezoar?", 20, snape)).
 accion(hermione, pregunta("¿Cómo levitar una pluma?", 25, flitwick)).
 
-    
+  
 
 
 
